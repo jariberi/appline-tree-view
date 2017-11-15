@@ -1,0 +1,26 @@
+{
+  "name": "appline-tree-view",
+  "version": "2.0.0",
+  "authors": [
+    "Jorge Riberi <jariberi@gmail.com>"
+  ],
+  "description": "Tree View Component for Polymer",
+  "main": "appline-tree-view.html",
+  "keywords": [
+    "tree",
+    "view",
+    "polymer"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "^2"
+  }
+}

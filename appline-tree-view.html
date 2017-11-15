@@ -1,0 +1,84 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="appline-tree-node.html">
+
+
+<dom-module id="appline-tree-view">
+    <template>
+        <div>
+            <template is="dom-repeat" items="{{data}}" as=item index-as=index>
+                <appline-tree-node data="[[item]]" actions="[[actions]]"></appline-tree-node>
+            </template>
+        </div>
+    </template>
+
+    <script>
+        class ApplineTreeView extends Polymer.Element {
+            static get is() {return "appline-tree-view";}
+
+            static get properties() {
+                return {
+                    /**
+                    * List of root nodes (contains the children).
+                    *
+                    * Specific data for each node:
+                    *
+                    * - `name`: string representing the node name.
+                    * - `icon`: string telling which icon to use (default to 'folder' icon).
+                    * - `open`: boolean telling whether the node is expanded or not.
+                    * - `children` array containing the children of the node.
+                    */
+                    data: {
+                        type: Array,
+                        value: () => {return null;},
+                        //observer: "_dataChanged"
+                    },
+                    /**
+                    * `selected` is the current selected `<appline-tree-view-node>` in the tree.
+                    */
+                    selected: {
+                        type: Object,
+                        value: () => {return null;},
+                        notify: true
+                    },
+                    /**
+                    * `actions` available for all nodes. Each action object has the following fields:
+                    *
+                    * - `action.label`: string representing the display name of the menu item.
+                    * - `action.event`: string which is the event name to dispatch whenever the item is clicked.
+                    *
+                    */
+                    actions: {
+                        type: Array,
+                        value: () => {return null;},
+                        //observer: "_actionsChanged"
+                    }
+                }
+            }
+
+            ready() {
+                super.ready();
+                this.addEventListener("select", this._selectNode);
+            }
+
+            /**
+            * Called when the `select` event is fired from an internal node.
+            *
+            * @param {object} e An event object.
+            */
+            _selectNode(e) {
+                if(this.selected) {
+                    this.selected.classList.remove("selected");
+                }
+                // Only selects `<appline-tree-view-node>`.
+                if (e.detail && e.detail.tagName === 'APPLINE-TREE-NODE') {
+                    this.selected = e.detail;
+                    this.selected.classList.add("selected");
+                } else {
+                    this.selected = null;
+                }
+            }
+        }
+
+        customElements.define(ApplineTreeView.is, ApplineTreeView);
+    </script>
+</dom-module>
