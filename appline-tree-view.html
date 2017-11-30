@@ -6,7 +6,7 @@
     <template>
         <div>
             <template is="dom-repeat" items="{{data}}" as=item index-as=index>
-                <appline-tree-node data="[[item]]" actions="[[actions]]"></appline-tree-node>
+                <appline-tree-node data="[[item]]"></appline-tree-node>
             </template>
         </div>
     </template>
@@ -40,18 +40,12 @@
                         value: () => {return null;},
                         notify: true
                     },
-                    /**
-                    * `actions` available for all nodes. Each action object has the following fields:
-                    *
-                    * - `action.label`: string representing the display name of the menu item.
-                    * - `action.event`: string which is the event name to dispatch whenever the item is clicked.
-                    *
-                    */
-                    actions: {
-                        type: Array,
-                        value: () => {return null;},
-                        //observer: "_actionsChanged"
-                    }
+                    value: {
+                        type: String,
+                        notify: true,
+                    },
+                    key: String,
+                    _selectedNode: Object
                 }
             }
 
@@ -60,22 +54,88 @@
                 this.addEventListener("select", this._selectNode);
             }
 
+            static get observers() {
+                return [
+                    "_onValueChanged(value, data)"
+                ]
+            }
+
             /**
             * Called when the `select` event is fired from an internal node.
             *
             * @param {object} e An event object.
             */
             _selectNode(e) {
-                if(this.selected) {
-                    this.selected.classList.remove("selected");
+                if(this._selectedNode) {
+                    this._selectedNode.classList.remove("selected");
                 }
                 // Only selects `<appline-tree-view-node>`.
                 if (e.detail && e.detail.tagName === 'APPLINE-TREE-NODE') {
-                    this.selected = e.detail;
-                    this.selected.classList.add("selected");
+                    this._selectedNode = e.detail;
+                    this._selectedNode.classList.add("selected");
+                    this.set("value", this._selectedNode.data[this.key])
+                    this.set("selected", this._selectedNode.data)
+                    //Open parents nodes if are closed
+                    var parent = this._selectedNode.getParent();
+                    while (parent) {
+                        parent.set("data.open", true);
+                        parent = parent.getParent();
+                    }
+                    //this.scrollTop = this._selectedNode.offsetTop - this.offsetTop + this.scrollTop;
                 } else {
-                    this.selected = null;
+                    this._selectedNode = null;
                 }
+            }
+
+            closeAll() {
+                const nodes = Polymer.dom(this.root).querySelectorAll("appline-tree-node");
+                nodes.forEach((item, index) => {
+                    this._closeRecursive(item);
+                });
+            }
+
+            _closeRecursive(node) {
+                node.set("data.open", false);
+                node.getChildren().forEach((children, index)=> {
+                    this._closeRecursive(children)
+                })
+            }
+
+            _onValueChanged(v, data) {
+                if (v && data) {
+                    if (!this._selectedNode ||(this._selectedNode && v != this._selectedNode.data[this.key])) {
+                        setTimeout(()=>{
+                            const nodes = Polymer.dom(this.root).querySelectorAll("appline-tree-node");
+                            var sel;
+                            nodes.forEach((item, index) => {
+                                var vsel = this._recursive(item, this.key, v)
+                                if(!sel) {
+                                    sel = vsel
+                                }
+                            })
+                            if (sel) {
+                                //Close al nodes
+                                this.closeAll();
+                                sel.select();
+                                sel.scrollIntoView();
+                            }
+                        }, 100)
+                    }
+                }
+            }
+
+            _recursive(node, key, value) {
+                var val = null;
+                if(node.data[key] == value) {
+                    return node
+                }
+                node.getChildren().forEach((item, x) => {
+                    var vval = this._recursive(item, key, value)
+                    if(!val) {
+                        val = vval;
+                    }
+                })
+                return val
             }
         }
 
